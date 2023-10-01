@@ -29,4 +29,4 @@ mpirun -np 4 ./lmp_mpi -in system_final.in >output_final.out
 Expected output: The simulation creates a position trajectory file in the lammpstrj format, employed for visualizing simulation results through [Ovito](https://www.ovito.org/) software. Additionally, the simulation produces an Analysis.txt file for calculating the distance between the center of mass of the PCH and Fibrillarin clusters.
 
 
-Typical installation for LAMMPS software is around 30 minutes. The simulation run for a single sample trajectory takes around 20 to 30 minutes. Analysis codes for single trajectory take less than a minute.
+Typical installation for LAMMPS software takes around 30 minutes. The initial simulation run takes less than 1 minute, while the final simulation run takes around 2 to 3 days.
