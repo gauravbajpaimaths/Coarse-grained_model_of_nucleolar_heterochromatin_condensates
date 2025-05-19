@@ -1,97 +1,89 @@
-variable f equal 45     #confinement
-variable h equal 0.35     #pit 
+#############################################
+# Polymer + Fibrillarin + Pitchoune System  #
+# Description:                              #
+# - Start with system.data (polymer: 10,000 beads)        #
+# - Add Fibrillarin and Pitchoune molecules               #
+# - Confine system in a spherical boundary                #
+# - Perform short energy minimization and dynamics        #
+#############################################
 
-variable        Rc equal ${f}
-variable        fibrin_conc equal 5000
-variable        pit_conc equal ${h}
-variable         Rg equal ${Rc}-5.0
-# Initialization
-units		lj
-boundary	s s s 
-atom_style	full 
+# ---------- Define system parameters ----------
+variable        Rc equal 45          # Radius of confinement
+variable        fib_conc equal 5000    # Number of Fibrillarin molecules
+variable        pit_conc equal 5000    # Number of Pitchoune molecules
+variable        Rg equal ${Rc}-5.0     # Smaller radius used for placement region
+
+# ---------- Simulation initialization ----------
+units		    lj
+boundary	    s s s                 # Shrink-wrapped boundary in all directions
+atom_style	    full
 bond_style      harmonic
 angle_style     cosine
-pair_style	lj/cut 2.5
-comm_modify mode single cutoff 5.0
-read_data	system.data
+pair_style	    lj/cut 2.5
 
+comm_modify mode single cutoff 5.0     # Communication optimization for small cutoff
+
+# ---------- Load polymer data ----------
+read_data	    ../system.data
+
+# ---------- Neighbor list settings ----------
 neighbor        0.4 bin
 neigh_modify    every 1 delay 1
 
-pair_style	lj/cut 2.5
-pair_coeff	* *  0.5 1 2.5
-#pair_coeff	* *  1.0 1 1.12246152962189
+# ---------- Initial LJ parameters for minimization ----------
+pair_style	    lj/cut 2.5
+pair_coeff	    * *  0.5 1 2.5         # Weaker interaction for minimization
 
+# ---------- Bond and angle parameters ----------
+bond_coeff	    * 0 0                 # Turn off all bonds
+bond_coeff	    3 100 1               # Enable bond type 3 (for future use)
+angle_coeff	    1 2                   # Angle type 1
 
-
-bond_coeff	* 0 0
-bond_coeff	3 100 1
-angle_coeff	1 2
-
-
+# ---------- Assign chromatin bead types ----------
+# +rDNA case: define a group for rDNA and set its atom type to 2
+# -rDNA case: skip this section if rDNA is not included in the simulation
 group rDNA id 4001:6000
 set group rDNA type 2
 
-
+# ---------- Soft spherical confinement to relax structure ----------
 fix indent1 all indent 0.001 sphere 0.0 0.0 0.0 30 side in
-
-minimize 1.0e-7 1.0e-8 3000 10000
-
+minimize 1.0e-7 1.0e-8 3000 10000     # Initial short minimization
 unfix indent1
 
+# ---------- Define final interaction parameters ----------
+pair_style	    lj/cut 2.5
+pair_coeff	    * *  1.0 1 1.12246152962189   # Standard LJ parameters for dynamics
 
-pair_style	lj/cut 2.5
-pair_coeff	* *  1.0 1 1.12246152962189
-
-#pair_coeff	1 3  0 0 0
-#pair_coeff	2 3  0 0 0
-#pair_coeff	3 3  1.0 1 2.5
-
-
+# ---------- Add Fibrillarin molecules (type 3) ----------
 region          p2 sphere 0.0 0.0 0.0 ${Rg} side in
+create_atoms    3 random ${fib_conc} 5211927 p2
+region          p2 delete
 
-
-create_atoms 3 random ${fibrin_conc} 5211927 p2
-
-
-region p2 delete
-
-
+# ---------- Add Pitchoune molecules (type 4) ----------
 region          p3 sphere 0.0 0.0 0.0 ${Rg} side in
+create_atoms    4 random ${pit_conc} 1211927 p3
+region          p3 delete
 
+# ---------- Group definitions ----------
+group fib type 3             # Fibrillarin beads
+group pit type 4             # Pitchoune beads
+group chromo subtract all fib pit  # Chromatin beads only
 
-create_atoms 4 random ${pit_conc} 1211927 p3
-
-
-region p3 delete
-
-
-
-
-
-#define group
-group fibrin type 3 # fibrin beads
-group pit type 4 # fibrin beads
-
-
-group chromo subtract all fibrin pit # Chromatin beads
-
-
+# ---------- Final confinement wall ----------
 region          nucleus sphere 0.0 0.0 0.0 ${Rc} side in
-fix             wall1 all  wall/region nucleus lj126 1.0 1.0 1.12246152962189
+fix             wall1 all wall/region nucleus lj126 1.0 1.0 1.12246152962189
 
+# ---------- Final minimization + short dynamics ----------
+minimize        1.0e-7 1.0e-8 30000 100000000
+fix             1 all nve
+fix             2 all langevin 1.0 1.0 10.0 904297  # Langevin thermostat
 
+# ---------- Output settings ----------
+thermo          1000
+compute         gyr chromo gyration
+thermo_style    custom step temp epair vol c_gyr
+timestep        0.005
+run             10000
 
-minimize 1.0e-7 1.0e-8 30000 100000000
-fix 1 all nve
-fix 2 all langevin 1.0 1.0 10.0 904297
-
-
-thermo 1000
-compute gyr chromo gyration
-thermo_style  custom step temp epair vol c_gyr
-timestep	0.005
-run 10000
-write_data system_after_initial.data
-
-
+# ---------- Save system state ----------
+write_data      system_after_initial.data
