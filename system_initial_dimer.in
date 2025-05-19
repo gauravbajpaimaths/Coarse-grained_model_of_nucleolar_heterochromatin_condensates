@@ -1,0 +1,117 @@
+##############################################################
+# Initial Setup Script — Pit as Dimer                        #
+# Description:                                               #
+# - Starts with system.data (polymer only)                   #
+# - Adds Fibrillarin and Pit molecules (as dimers)           #
+# - Creates bonds between Pit head (type 4) and tail (type 5)#
+# - Applies spherical confinement and performs short MD run  #
+# - Outputs system_after_initial.data for production runs    #
+##############################################################
+
+# ---------- Variable definitions ----------
+variable h equal 5000                     # Total number of Pit beads (as dimers)
+
+variable Rc equal 45                      # Confinement radius
+variable fib_conc equal 5000             # Number of Fibrillarin molecules
+variable pit_head_conc equal ${h}/2      # Half will be Pit head
+variable pit_tail_conc equal ${h}/2      # Half will be Pit tail
+variable Rg equal ${Rc}-5.0              # Smaller radius for placement
+
+# ---------- Initialization ----------
+units		    lj
+boundary	    s s s
+atom_style	    full
+bond_style      harmonic
+angle_style     cosine
+pair_style	    lj/cut 2.5
+comm_modify     mode single cutoff 5.0
+
+# ---------- Load initial polymer data with extra bond capacity ----------
+read_data	system.data &
+            extra/bond/per/atom 1000 &
+            extra/special/per/atom 1000
+
+# ---------- Neighbor settings ----------
+neighbor        0.4 bin
+neigh_modify    every 1 delay 1
+
+# ---------- Soft interactions for initial minimization ----------
+pair_style	    lj/cut 2.5
+pair_coeff	    * *  0.5 1 2.5           # Soft interactions
+
+# ---------- Bond and angle coefficients ----------
+bond_coeff	    * 0 0
+bond_coeff	    2 100 1                 # For Pit dimer bond
+bond_coeff	    3 100 1                 # For polymer
+angle_coeff	    1 2
+
+# ---------- Assign rDNA type (optional) ----------
+group rDNA id 4001:6000
+set group rDNA type 2
+
+# ---------- Apply weak spherical indent for energy minimization ----------
+fix indent1 all indent 0.001 sphere 0.0 0.0 0.0 30 side in
+minimize 1.0e-7 1.0e-8 3000 10000
+unfix indent1
+
+# ---------- Define final interaction parameters ----------
+pair_style	    lj/cut 2.5
+pair_coeff	    * *  1.0 1 1.12246152962189
+pair_coeff	    4 5  0.25 1 2.5         # Pit head–tail interaction before bonding
+
+# ---------- Add Fibrillarin molecules (type 3) ----------
+region p2 sphere 0.0 0.0 0.0 ${Rg} side in
+create_atoms 3 random ${fib_conc} 5211927 p2
+region p2 delete
+
+# ---------- Add Pit head (type 4) ----------
+region p3 sphere 0.0 0.0 0.0 ${Rg} side in
+create_atoms 4 random ${pit_head_conc} 1211927 p3
+region p3 delete
+
+# ---------- Add Pit tail (type 5) ----------
+region p4 sphere 0.0 0.0 0.0 ${Rg} side in
+create_atoms 5 random ${pit_tail_conc} 2211927 p4
+region p4 delete
+
+# ---------- Define groups ----------
+group fib type 3             # Fibrillarin beads
+group pit_head type 4        # Pit head (dimer)
+group pit_tail type 5        # Pit tail (dimer)
+group chromo subtract all fib pit_head pit_tail   # Chromatin beads only
+
+# ---------- Save intermediate configuration ----------
+write_data system_before_initial.data
+
+# ---------- Final spherical confinement ----------
+region          nucleus sphere 0.0 0.0 0.0 ${Rc} side in
+fix             wall1 all wall/region nucleus lj126 1.0 1.0 1.12246152962189
+
+# ---------- Energy minimization and initial dynamics ----------
+minimize 1.0e-7 1.0e-8 30000 100000000
+
+# Create bonds between Pit head and tail within 2.5 distance
+fix 5 all bond/create 1 4 5 2.5 2 iparam 1 4 jparam 1 5
+
+# ---------- Integrator and thermostat ----------
+fix 1 all nve
+fix 2 all langevin 1.0 1.0 10.0 904297
+
+# ---------- Dump trajectory of Pit dimer formation ----------
+dump 2 all custom 20000 pitdimer.lammpstrj id mol type x y z ix iy iz
+
+# ---------- Thermo and Gyration tracking ----------
+thermo 1000
+compute gyr chromo gyration
+thermo_style  custom step temp epair vol c_gyr f_5[2]
+
+# ---------- Short equilibration ----------
+timestep 0.005
+run 10000
+
+# ---------- Longer equilibration ----------
+timestep 0.01
+run 2000000
+
+# ---------- Save output system for final simulation ----------
+write_data system_after_initial.data
