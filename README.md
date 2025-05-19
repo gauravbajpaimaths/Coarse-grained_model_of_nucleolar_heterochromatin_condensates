@@ -64,10 +64,10 @@ Simulates Pitchoune as a **dimer**, with distinct head and tail particles bonded
 - `system.data`  
   Initial configuration file with the polymer structure
 
-- `system_initial.in`  
+- `system_initial_dimer.in`  
   LAMMPS script to add Fibrillarin and Pit (head + tail) molecules, and create Pit dimers via bonding
 
-- `system.in`  
+- `system_dimer.in`  
   Main simulation script with detailed pairwise interactions, confinement, and observable tracking (e.g., cluster size, COM distance, R<sub>g</sub>)
 
 ---
