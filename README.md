@@ -1,5 +1,5 @@
-This update includes several new case additions, enhancing the model’s flexibility and scope
-Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip
+[This update includes several new case additions, enhancing the model’s flexibility and scope
+Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip](https://github.com/user-attachments/files/20303025/Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip)
 
 # Affinity Hierarchies and Amphiphilic Proteins Underlie the Co-Assembly of Nucleolar and Heterochromatin Condensates
 
