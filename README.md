@@ -1,7 +1,9 @@
-The updated source code and input files can be downloaded from this link:
+# Affinity Hierarchies and Amphiphilic Proteins Underlie the Co-Assembly of Nucleolar and Heterochromatin Condensates
+
+The updated source code and input files can be downloaded from this link:  
 [Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip](https://github.com/user-attachments/files/20303025/Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip)
 
-# Affinity Hierarchies and Amphiphilic Proteins Underlie the Co-Assembly of Nucleolar and Heterochromatin Condensates
+---
 
 ## Table of Contents  
 - [Overview](#overview)  
@@ -13,74 +15,58 @@ The updated source code and input files can be downloaded from this link:
 
 ## Overview
 
-This repository contains all input scripts and configuration files used to simulate the **co-assembly of nucleolar and heterochromatin condensates** using the molecular dynamics package [LAMMPS](https://www.lammps.org/).
+This repository contains all input scripts and data files used to simulate the **co-assembly of nucleolar and heterochromatin condensates** using the molecular dynamics engine [LAMMPS](https://www.lammps.org/).
 
-The model represents **four nuclear components**:
-- **PCH (Heterochromatin)** – as a long polymer chain
-- **Ribosomal DNA (rDNA)** – as a long polymer chain
-- **Fibrillarin (F)** – as independent monomers
-- **Pitchoune (X)** – modeled as either:
-  - Independent amphiphilic monomers (in `Pitchoune_as_independent_molecule`)
-  - Dimers with head and tail (in `Pitchoune_as_dimer`)
+The model represents four key nuclear components:
+- **PCH (Heterochromatin)** – modeled as a long polymer chain  
+- **Ribosomal DNA (rDNA)** – modeled as another long polymer chain  
+- **Fibrillarin (F)** – modeled as free monomers  
+- **Pitchoune (X)** – modeled as independent amphiphilic monomers  
 
-The simulations explore how **molecular interactions and spatial confinement** drive the organization of these components within the nucleus.
+The simulations explore how **molecular interactions, spatial confinement**, and **relative affinities** among components lead to phase-separated nuclear compartments.
 
 ---
 
 ## System Requirements
 
 - **LAMMPS** (Large-scale Atomic/Molecular Massively Parallel Simulator)  
-  - See the [official installation guide](https://docs.lammps.org/Install.html) for setup instructions.
-  - MPI support is recommended for multi-core runs.
+  - Official install guide: [https://docs.lammps.org/Install.html](https://docs.lammps.org/Install.html)  
+  - MPI-enabled build recommended for parallel execution
 
-- **Platform compatibility:**  
+- **Operating system:**  
   - Tested on **Ubuntu Linux**  
-  - Should also work on **macOS** or **Windows** with proper C/C++ compilers and MPI setup
+  - Should also work on macOS or Windows with compatible C/C++ compilers and MPI setup
 
 - **Visualization tool:**  
-  - [OVITO](https://www.ovito.org/) (Open Visualization Tool) for rendering `.lammpstrj` trajectories
+  - [OVITO](https://www.ovito.org/) for viewing `.lammpstrj` trajectory files
 
 ---
 
 ## File Description
 
-### 📁 `Pitchoune_as_independent_molecule/`
-Simulates Pitchoune as **independent monomers** (single-particle proteins)
-
 - `system.data`  
-  Initial configuration file with the polymer structure
+  Initial configuration file containing the bead-spring polymer setup
 
 - `system_initial.in`  
-  Initial LAMMPS script to add Fibrillarin and Pitchoune molecules to the system
+  LAMMPS script to initialize the system by adding Fibrillarin and Pitchoune molecules and confining them
 
 - `system.in`  
-  Main LAMMPS script to run the simulation with all four components confined in a spherical region
+  Main LAMMPS script to simulate the system dynamics, compute observables (e.g., center-of-mass distances, cluster sizes, radius of gyration), and save output
 
----
-
-### 📁 `Pitchoune_as_dimer/`
-Simulates Pitchoune as a **dimer**, with distinct head and tail particles bonded during initialization
-
-- `system.data`  
-  Initial configuration file with the polymer structure
-
-- `system_initial_dimer.in`  
-  LAMMPS script to add Fibrillarin and Pit (head + tail) molecules, and create Pit dimers via bonding
-
-- `system_dimer.in`  
-  Main simulation script with detailed pairwise interactions, confinement, and observable tracking (e.g., cluster size, COM distance, R<sub>g</sub>)
+- `README.md`  
+  This documentation file
 
 ---
 
 ## How to Run
 
-1. **Install LAMMPS** by following the [installation instructions](https://docs.lammps.org/Install.html)
+1. **Install LAMMPS** following the [official instructions](https://docs.lammps.org/Install.html).
 
-2. **Run the simulations** (ensure that `system.data` is present in the same folder as the scripts):
+2. **Run the simulations** (make sure `system.data`, `system_initial.in`, and `system.in` are in the same directory):
 
 ```bash
-# Run the initial configuration step
+# Step 1: Run initial setup to place proteins and perform initial minimization
 ./lmp_mpi -in system_initial.in > output_initial.out
 
-# Run the final simulation (multi-core)
+# Step 2: Run the full dynamics simulation (multi-core recommended)
 mpirun -np 4 ./lmp_mpi -in system.in > output_final.out
