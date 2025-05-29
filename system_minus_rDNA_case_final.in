@@ -1,0 +1,121 @@
+#############################################
+# -rDNA case 
+# Final Simulation Code (After Initialization)
+# Description:
+# - Starts from system_after_norDNA_initial.data
+# - Assigns detailed interactions between all species
+# - Computes COM distances, cluster sizes, gyration radii
+# - Dumps images and trajectory
+#############################################
+
+# ---------- Define key variables ----------
+variable thermofreq equal 500000         # Frequency for thermo and file outputs
+variable Rc equal 45                      # Radius of nuclear confinement
+variable pit_conc equal 5000             # Number of Pit molecules
+variable fibrillarin_conc equal 5000     # Number of Fibrillarin molecules
+
+# ---------- Initialization ----------
+units            lj
+boundary         s s s
+atom_style       full
+bond_style       harmonic
+angle_style      cosine
+pair_style       lj/cut 2.5
+
+# ---------- Load initial data generated from the setup script ----------
+read_data        system_after_norDNA_initial.data
+
+# ---------- Neighbor settings ----------
+neighbor         0.4 bin
+neigh_modify     every 1 delay 1
+
+# ---------- Define interaction parameters ----------
+pair_style       lj/cut 2.5
+
+pair_coeff       * *  1.0 1 1.12246152962189           # Default interaction
+pair_coeff       1 1  0.35 1 2.5                       # Heterochromatin-heterochromatin
+pair_coeff       2 2  1.0 1 1.12246152962189           # rDNA-rDNA
+pair_coeff       3 3  2.0 1 2.5                        # Fibrillarin self
+pair_coeff       2 3  2.0 1 2.5                        # rDNA-Fibrillarin
+pair_coeff       4 4  1.8 1 2.5                        # Pit self
+pair_coeff       1 4  0.75 1 2.5                       # Heterochromatin-Pit
+pair_coeff       3 4  1.5 1 2.5                        # Fibrillarin-Pit
+
+# ---------- Bond and angle coefficients ----------
+bond_coeff       * 0 0
+bond_coeff       3 100 1
+angle_coeff      1 2
+
+# ---------- Define groups ----------
+group fibrillarin type 3       # Fibrillarin beads
+group pit type 4               # Pit beads
+group hetero type 1            # Heterochromatin beads
+group rDNA type 2              # rDNA beads
+
+group chromo subtract all fibrillarin pit   # Chromatin = all beads excluding Pit & Fibrillarin
+
+# ---------- Nuclear spherical confinement ----------
+region          nucleus sphere 0.0 0.0 0.0 ${Rc} side in
+fix             wall1 all wall/region nucleus lj126 1.0 1.0 1.12246152962189
+
+# ---------- Output thermodynamic information to file ----------
+variable t equal step
+variable mytemp equal temp
+variable myepair equal epair
+fix mythermofile all print ${thermofreq} "$t ${mytemp} ${myepair}" file thermo_output.dat screen no
+
+# ---------- Compute center of mass distance between hetero & fibrillarin ----------
+compute Hcom hetero com
+compute Fcom fibrillarin com
+variable distCOM equal sqrt((c_Hcom[1]-c_Fcom[1])^2+(c_Hcom[2]-c_Fcom[2])^2+(c_Hcom[3]-c_Fcom[3])^2)
+
+# ---------- Compute cluster size and radius of gyration for fibrillarin ----------
+compute cluster fibrillarin cluster/atom 1.15
+compute ccmod fibrillarin chunk/atom c_cluster compress yes
+compute size fibrillarin property/chunk ccmod count
+variable largest equal max(c_size)
+
+fix dist fibrillarin ave/histo ${thermofreq} 1 ${thermofreq} 1 ${fibrillarin_conc} ${fibrillarin_conc} c_size mode vector ave one beyond ignore file tmp.histo
+
+compute myChunk fibrillarin gyration/chunk ccmod
+fix gyrfibrillarin fibrillarin ave/time ${thermofreq} 1 ${thermofreq} c_myChunk file gyration.out mode vector
+variable largestgyr equal max(c_myChunk)
+
+# ---------- Compute cluster size for Pit ----------
+compute pitcluster pit aggregate/atom 1.15
+compute pitmod pit chunk/atom c_pitcluster compress yes
+compute pitsize pit property/chunk pitmod count
+variable largestpit equal max(c_pitsize)
+
+fix distpit pit ave/histo ${thermofreq} 1 ${thermofreq} 1 ${pit_conc} ${pit_conc} c_size mode vector ave one beyond ignore file tmp.histopit
+
+# ---------- Radius of gyration computations ----------
+compute gyrchrom chromo gyration
+compute gyrH hetero gyration
+compute gyrrDNA rDNA gyration
+
+variable RGchrom equal c_gyrchrom
+variable RGhet equal c_gyrH
+variable RGrDNA equal c_gyrrDNA
+
+# ---------- Output final observables to Analysis.txt ----------
+fix myRGfile all print 10000 "$t ${largest} ${largestgyr} ${distCOM} ${RGchrom} ${RGhet} ${RGrDNA} ${largestpit}" file Analysis.txt screen no
+
+# ---------- Dump trajectory ----------
+dump 1 all custom ${thermofreq} dna.lammpstrj id mol type x y z ix iy iz c_pitcluster
+
+# ---------- Short initial relaxation ----------
+fix 1 all nve/limit 0.1
+fix 2 all langevin 1.0 1.0 10.0 904297
+timestep 0.01
+run 10000
+
+# ---------- Main production run ----------
+unfix 1
+fix 1 all nve
+thermo ${thermofreq}
+thermo_style custom step temp epair vol
+run 20000000
+
+# ---------- Save final configuration ----------
+write_data system_after_final.data
