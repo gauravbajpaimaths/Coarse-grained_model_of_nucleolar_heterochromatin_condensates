@@ -38,7 +38,7 @@ pair_coeff       3 3  2.0 1 2.5                        # Fibrillarin self
 pair_coeff       2 3  2.0 1 2.5                        # rDNA-Fibrillarin
 pair_coeff       4 4  1.8 1 2.5                        # Pit self
 pair_coeff       1 4  0.75 1 2.5                       # Heterochromatin-Pit
-pair_coeff       3 4  1.5 1 2.5                        # Fibrillarin-Pit
+pair_coeff       3 4  1.5 1 2.5                        # Fibrillarin-Pit (+rDNA case)
 
 # ---------- Bond and angle coefficients ----------
 bond_coeff       * 0 0
