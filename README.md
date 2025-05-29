@@ -1,4 +1,4 @@
-# Hierarchical Interactions Between Nucleolar and Heterochromatin Condensates Are Mediated by a Dual-Affinity Protein
+# Hierarchical interactions between nucleolar and heterochromatin condensates are mediated by a dual-affinity protein
 
 ## Table of Contents  
 - [Overview](#overview)  
