@@ -25,7 +25,7 @@ pair_style	    lj/cut 2.5
 comm_modify mode single cutoff 5.0     # Communication optimization for small cutoff
 
 # ---------- Load polymer data ----------
-read_data	    ../system.data
+read_data	    system.data
 
 # ---------- Neighbor list settings ----------
 neighbor        0.4 bin
