@@ -1,6 +1,6 @@
-# Affinity Hierarchies and Amphiphilic Proteins Underlie the Co-Assembly of Nucleolar and Heterochromatin Condensates
+# Hierarchical Interactions Between Nucleolar and Heterochromatin Condensates Are Mediated by a Dual-Affinity Protein
 
-The updated source code and input files can be downloaded from this link:  
+The updated source code and input files can be downloaded from the link below:  
 [Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip](https://github.com/user-attachments/files/20303025/Coarse-grained_model_of_nucleolar_heterochromatin_condensates-2.0.0.zip)
 
 ---
@@ -10,63 +10,67 @@ The updated source code and input files can be downloaded from this link:
 - [System Requirements](#system-requirements)  
 - [File Description](#file-description)  
 - [How to Run](#how-to-run)  
+- [Output Files](#output-files)  
+- [Estimated Time](#estimated-time)
 
 ---
 
 ## Overview
 
-This repository contains all input scripts and data files used to simulate the **co-assembly of nucleolar and heterochromatin condensates** using the molecular dynamics engine [LAMMPS](https://www.lammps.org/).
+This repository contains LAMMPS input scripts and data files for simulating the **hierarchical co-assembly of nucleolar and heterochromatin condensates**, focusing on the role of a **dual-affinity amphiphilic protein (Pitchoune)**.
 
-The model represents four key nuclear components:
-- **PCH (Heterochromatin)** – modeled as a long polymer chain  
-- **Ribosomal DNA (rDNA)** – modeled as another long polymer chain  
-- **Fibrillarin (F)** – modeled as free monomers  
-- **Pitchoune (X)** – modeled as independent amphiphilic monomers  
+The model includes four nuclear components:
+- **PCH (heterochromatin)** – long polymer chain
+- **rDNA (ribosomal DNA)** – optional long polymer chain
+- **Fibrillarin** – free monomers
+- **Pitchoune (X)** – amphiphilic monomers with affinity to both heterochromatin and nucleolar components
 
-The simulations explore how **molecular interactions, spatial confinement**, and **relative affinities** among components lead to phase-separated nuclear compartments.
+Two model variants are provided:
+- **Plus rDNA** – includes rDNA chains  
+- **Minus rDNA** – simulates a system without rDNA  
 
 ---
 
 ## System Requirements
 
 - **LAMMPS** (Large-scale Atomic/Molecular Massively Parallel Simulator)  
-  - Official install guide: [https://docs.lammps.org/Install.html](https://docs.lammps.org/Install.html)  
-  - MPI-enabled build recommended for parallel execution
+  - Installation guide: [https://docs.lammps.org/Install.html](https://docs.lammps.org/Install.html)  
+  - MPI-enabled build recommended for faster simulations
 
-- **Operating system:**  
-  - Tested on **Ubuntu Linux**  
-  - Should also work on macOS or Windows with compatible C/C++ compilers and MPI setup
+- **Tested on:**  
+  - Ubuntu Linux (recommended)  
+  - Should also run on macOS or Windows with compatible compilers and MPI setup
 
-- **Visualization tool:**  
-  - [OVITO](https://www.ovito.org/) for viewing `.lammpstrj` trajectory files
+- **Visualization:**  
+  - Use [OVITO](https://www.ovito.org/) to view `.lammpstrj` trajectory files
 
 ---
 
 ## File Description
 
-- `system.data`  
-  Initial configuration file containing the bead-spring polymer setup
-
-- `system_initial.in`  
-  LAMMPS script to initialize the system by adding Fibrillarin and Pitchoune molecules and confining them
-
-- `system.in`  
-  Main LAMMPS script to simulate the system dynamics, compute observables (e.g., center-of-mass distances, cluster sizes, radius of gyration), and save output
-
-- `README.md`  
-  This documentation file
+| File Name                        | Description                                                    |
+|----------------------------------|----------------------------------------------------------------|
+| `system.data`                    | Initial configuration file containing polymer bead setup       |
+| `system_initial_plus_rDNA.in`    | LAMMPS script to initialize system **with rDNA**               |
+| `system_initial_minus_rDNA.in`   | LAMMPS script to initialize system **without rDNA**            |
+| `system_final_plus_rDNA.in`      | Final production simulation script **with rDNA**               |
+| `system_final_minus_rDNA.in`     | Final production simulation script **without rDNA**            |
 
 ---
 
 ## How to Run
 
-1. **Install LAMMPS** following the [official instructions](https://docs.lammps.org/Install.html).
+1. **Install LAMMPS** (see: [https://docs.lammps.org/Install.html](https://docs.lammps.org/Install.html))
 
-2. **Run the simulations** (make sure `system.data`, `system_initial.in`, and `system.in` are in the same directory):
+2. **Choose a variant:**  
+   - With rDNA: use `*_plus_rDNA.in` scripts  
+   - Without rDNA: use `*_minus_rDNA.in` scripts
+
+3. **Run simulations:**
 
 ```bash
-# Step 1: Run initial setup to place proteins and perform initial minimization
-./lmp_mpi -in system_initial.in > output_initial.out
+# Step 1: Initialization (place Fibrillarin and Pitchoune)
+./lmp_mpi -in system_initial_plus_rDNA.in > output_initial.out
 
-# Step 2: Run the full dynamics simulation (multi-core recommended)
-mpirun -np 4 ./lmp_mpi -in system.in > output_final.out
+# Step 2: Final production run
+mpirun -np 4 ./lmp_mpi -in system_final_plus_rDNA.in > output_final.out
