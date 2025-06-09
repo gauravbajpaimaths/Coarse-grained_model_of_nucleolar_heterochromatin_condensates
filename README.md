@@ -12,13 +12,13 @@
 
 ## Overview
 
-This repository contains LAMMPS input scripts and data files for simulating the **co-assembly of nucleolar and heterochromatin condensates**, focusing on the role of a **dual-affinity amphiphilic protein (Pitchoune)**.
+This repository contains LAMMPS input scripts and data files for simulating the **co-assembly of nucleolar and heterochromatin condensates**, focusing on the role of a **dual-affinity protein (Pitchoune)**.
 
 The model includes four nuclear components:
 - **PCH (Heterochromatin)** – a 10,000-bead polymer chain
 - **rDNA (Ribosomal DNA)** – optional region of 2000 beads (IDs 4001–6000) relabeled from the PCH chain
 - **Fibrillarin** – added as free monomers
-- **Pitchoune (X)** – added as amphiphilic monomers
+- **Pitchoune (X)** – added as dual-affinity monomers
 
 Two simulation variants are provided:
 - **+rDNA**: includes rDNA by relabeling part of the polymer
