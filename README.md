@@ -22,7 +22,7 @@ The model includes four nuclear components:
 
 Two simulation variants are provided:
 - **+rDNA**: includes rDNA by relabeling part of the polymer
-- **–rDNA**: entire chain remains as PCH with no rDNA
+- **–rDNA**: rDNA is retained in the chain but all its interactions are turned off, so the entire polymer behaves as PCH
 
 ---
 
